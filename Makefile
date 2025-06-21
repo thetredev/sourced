@@ -43,7 +43,6 @@ all: release
 
 .PHONY: init-submodules
 init-submodules:
-	git submodule status | cut -d ' ' -f 3 | xargs rm -rf
 	git submodule update --init --recursive
 
 .PHONY: clean
