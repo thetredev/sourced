@@ -1,0 +1,25 @@
+{
+  "configurations": [
+    {
+      "name": "sourced",
+      "intelliSenseMode": "linux-clang-x64",
+      "compilerPath": "/usr/bin/clang",
+      "cStandard": "c23",
+      "cppStandard": "gnu++23",
+      "includePath": [
+        "vendor/hl2sdk-css/public",
+        "vendor/hl2sdk-css/public/tier0",
+        "vendor/hl2sdk-css/public/tier1",
+        "vendor/hl2sdk-css/game/server",
+        "vendor/hl2sdk-css/game/shared"
+      ],
+      "defines": [
+        "GNU",
+        "GNUC",
+        "LINUX",
+        "POSIX"
+      ],
+    }
+  ],
+  "version": 4
+}
