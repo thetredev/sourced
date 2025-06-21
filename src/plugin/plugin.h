@@ -14,6 +14,9 @@
 #include <igameevents.h>
 #include <engine/iserverplugin.h>
 
+// Plugin
+#include "plugin_shim.h"
+
 
 // ========= PLUGIN INTERFACE DECLARATION =========
 namespace sourced::plugin {
@@ -48,6 +51,7 @@ public:
 public:
     SourceEngineData source_engine;
     Info info;
+    shim::Shim shim;
 };
 
 
@@ -84,10 +88,10 @@ public:
         edict_t *client_entity, const char *client_name, const char *client_address,
         char *reject, int max_reject_len
     );
+    virtual PLUGIN_RESULT ClientCommand(edict_t *client_entity, const CCommand &args);
     virtual void ClientActive(edict_t *client_entity);
     virtual void ClientDisconnect(edict_t *client_entity);
     virtual void ClientPutInServer(edict_t *client_entity, const char *player_name);
-    virtual PLUGIN_RESULT ClientCommand(edict_t *client_entity, const CCommand &args);
     virtual void ClientSettingsChanged(edict_t *client_entity);
 
 public:

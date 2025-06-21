@@ -34,7 +34,7 @@ Data::Data(int client_command_index, IServerGameDLL *server_game_dll, const char
     }, info{
         .name = name,
         .author = author,
-    }
+    }, shim{}
 {}
 
 
@@ -76,16 +76,25 @@ bool Plugin::Load(CreateInterfaceFn /*interface_factory*/, CreateInterfaceFn /*g
     m = new Data(0, nullptr, "Plugin Name", "Plugin Version");
 
     // print a message
-    Msg("[%s] Loaded successfully!\n", m->info.name);
+    //Msg("[%s] Loaded successfully!\n", m->info.name);
 
     // indicate to SRCDS that the plugin loaded successfully
-    return true;
+    return m->shim.load();
 }
 
 // Cleanup
 void Plugin::Unload(void) {
-    Msg("[%s] Unloading...\n", m->info.name);
+    //Msg("[%s] Unloading...\n", m->info.name);
+    m->shim.unload();
     delete m;
+}
+
+void Plugin::Pause(void) {
+    m->shim.pause();
+}
+
+void Plugin::UnPause(void) {
+    m->shim.unPause();
 }
 
 // This string is returned when `plugin_print` is typed into the SRCDS console
@@ -93,9 +102,6 @@ const char *Plugin::GetPluginDescription(void) {
     return format_version_string(m->info);
 }
 
-// ========= PLUGIN INTERFACE STUB =========
-// These are required, but the stub implementations are fine
-// for this plugin's use case. Defined here to make the plugin compile.
 int Plugin::GetCommandIndex() {
     return m->source_engine.client_command_index;
 }
@@ -104,32 +110,75 @@ void Plugin::SetCommandClient(int index) {
     m->source_engine.client_command_index = index;
 }
 
-PLUGIN_RESULT Plugin::ClientConnect(bool *, edict_t *, const char *, const char *, char *, int) {
-    return PLUGIN_CONTINUE;
+void Plugin::LevelInit(const char *level_name) {
+    m->shim.onLevelInit(level_name);
 }
 
-PLUGIN_RESULT Plugin::ClientCommand(edict_t *, const CCommand &) {
-    return PLUGIN_CONTINUE;
+void Plugin::LevelShutdown(void) {
+    m->shim.onLevelShutdown();
 }
 
-PLUGIN_RESULT Plugin::NetworkIDValidated(const char *, const char *) {
-    return PLUGIN_CONTINUE;
+PLUGIN_RESULT Plugin::ClientConnect(
+    bool *client_allowed,
+    edict_t *client_entity, const char *client_name, const char *client_address,
+    char *reject, int max_reject_len
+) {
+    return m->shim.onClientConnect(client_allowed, client_entity, client_name, client_address, reject, max_reject_len);
 }
 
-// These are optional. Defined here to make the plugin compile.
-void Plugin::Pause(void) {}
-void Plugin::UnPause(void) {}
-void Plugin::LevelInit(const char *) {}
-void Plugin::ServerActivate(edict_t *, int, int) {}
-void Plugin::LevelShutdown(void) {}
-void Plugin::ClientActive(edict_t *) {}
-void Plugin::ClientDisconnect(edict_t *) {}
-void Plugin::ClientPutInServer(edict_t *, const char *) {}
-void Plugin::ClientSettingsChanged(edict_t *) {}
-void Plugin::OnQueryCvarValueFinished(QueryCvarCookie_t, edict_t *, EQueryCvarValueStatus, const char *, const char *) {}
-void Plugin::OnEdictAllocated(edict_t *) {}
-void Plugin::OnEdictFreed(const edict_t *) {}
-void Plugin::FireGameEvent(KeyValues *) {}
-void Plugin::GameFrame(bool) {}
+PLUGIN_RESULT Plugin::ClientCommand(edict_t *client_entity, const CCommand &args) {
+    return m->shim.onClientCommand(client_entity, args);
+}
+
+void Plugin::ClientActive(edict_t *client_entity) {
+    m->shim.onClientActive(client_entity);
+}
+
+void Plugin::ClientDisconnect(edict_t *client_entity) {
+    m->shim.onClientDisconnect(client_entity);
+}
+
+void Plugin::ClientPutInServer(edict_t *client_entity, const char *player_name) {
+    m->shim.onClientPutInServer(client_entity, player_name);
+}
+
+void Plugin::ClientSettingsChanged(edict_t *client_entity) {
+    m->shim.onClientSettingsChanged(client_entity);
+}
+
+void Plugin::ServerActivate(edict_t *edict_list, int edict_count, int client_count_max) {
+    m->shim.onServerActivate(edict_list, edict_count, client_count_max);
+}
+
+void Plugin::GameFrame(bool simulating) {
+    m->shim.onGameFrame(simulating);
+}
+
+PLUGIN_RESULT Plugin::NetworkIDValidated(const char *client_name, const char *network_id) {
+    return m->shim.onNetworkIDValidated(client_name, network_id);
+}
+
+void Plugin::OnQueryCvarValueFinished(
+    QueryCvarCookie_t query_cvar_cookie,
+    edict_t *client_entity, EQueryCvarValueStatus query_cvar_value_status,
+    const char *cvar_name, const char *cvar_value
+) {
+    m->shim.onQueryCvarValueFinished(
+        query_cvar_cookie, client_entity,
+        query_cvar_value_status, cvar_name, cvar_value
+    );
+}
+
+void Plugin::OnEdictAllocated(edict_t *edict) {
+    m->shim.onEdictAllocated(edict);
+}
+
+void Plugin::OnEdictFreed(const edict_t *edict) {
+    m->shim.onEdictFreed(edict);
+}
+
+void Plugin::FireGameEvent(KeyValues *event_data) {
+    m->shim.onFireGameEvent(event_data);
+}
 
 } // namespace sourced::plugin
