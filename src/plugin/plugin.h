@@ -24,6 +24,7 @@ namespace sourced::plugin {
 
 typedef struct {
     int client_command_index;
+    IVEngineServer *server_engine_dll;
     IServerGameDLL *server_game_dll;
 } SourceEngineData;
 
@@ -46,7 +47,11 @@ public:
     ~Data() = default;
 
 public:
-    Data(int client_command_index, IServerGameDLL *server_game_dll, const char *name, const char *author);
+    Data(
+        int client_command_index,
+        IVEngineServer *server_engine_dll, IServerGameDLL *server_game_dll,
+        const char *name, const char *author
+    );
 
 public:
     SourceEngineData source_engine;

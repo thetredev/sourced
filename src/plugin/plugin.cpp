@@ -27,9 +27,13 @@ const char *format_version_string(const Info &info) {
 }
 
 
-Data::Data(int client_command_index, IServerGameDLL *server_game_dll, const char *name, const char *author)
-    : source_engine{
+Data::Data(
+    int client_command_index,
+    IVEngineServer *server_engine_dll, IServerGameDLL *server_game_dll,
+    const char *name, const char *author
+) : source_engine{
         .client_command_index = client_command_index,
+        .server_engine_dll = server_engine_dll,
         .server_game_dll = server_game_dll,
     }, info{
         .name = name,
@@ -41,7 +45,7 @@ Data::Data(int client_command_index, IServerGameDLL *server_game_dll, const char
 // ========= PLUGIN INTERFACE IMPLEMENTATION =========
 
 // Prepare plugin execution
-bool Plugin::Load(CreateInterfaceFn /*interface_factory*/, CreateInterfaceFn /*game_server_factory*/) {
+bool Plugin::Load(CreateInterfaceFn interface_factory, CreateInterfaceFn /*game_server_factory*/) {
     // // ensure availability of external dependencies
     // if (system("which strings > /dev/null 2>&1") != 0) {
     //     // print an error message
@@ -73,7 +77,13 @@ bool Plugin::Load(CreateInterfaceFn /*interface_factory*/, CreateInterfaceFn /*g
     //     return false;
     // }
 
-    m = new Data(0, nullptr, "Plugin Name", "Plugin Version");
+    IVEngineServer *engine = (IVEngineServer*)interface_factory(INTERFACEVERSION_VENGINESERVER, NULL);
+    if (!engine) {
+        Msg("Could not get IVEngineServer instance\n!");
+        return false;
+    }
+
+    m = new Data(0, engine, nullptr, "Plugin Name", "Plugin Version");
 
     // print a message
     //Msg("[%s] Loaded successfully!\n", m->info.name);
